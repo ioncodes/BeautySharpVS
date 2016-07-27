@@ -1,11 +1,12 @@
 ﻿//------------------------------------------------------------------------------
-// <copyright file="Paste.cs" company="Company">
-//     Copyright (c) Company.  All rights reserved.
+// <copyright file="Paste.cs" company="ionix">
+//     Copyright (c) ionix.  All rights reserved.
 // </copyright>
 //------------------------------------------------------------------------------
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel.Design;
 using System.Globalization;
 using Microsoft.VisualStudio.Shell;
@@ -13,6 +14,9 @@ using Microsoft.VisualStudio.Shell.Interop;
 using System.Diagnostics;
 using System.Windows.Forms;
 using System.IO;
+using System.Net;
+using System.Text;
+using System.Web;
 using Microsoft.Win32;
 
 namespace BeautySharp
@@ -23,8 +27,13 @@ namespace BeautySharp
     internal sealed class Paste
     {
         private static string _token = "";
+        private static readonly string Path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/BeautySharp.ini";
 
-        private static readonly string _path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/BeautySharp.ini";
+        private const string TokenSuffix = "{TOKEN}";
+
+        /* URL BASES */
+        private const string UrlPaste = "http://www.ioncodes.com/BeautySharp/create.php?token={TOKEN}";
+        private const string UrlCreateToken = "http://www.ioncodes.com/BeautySharp/createtoken.php";
 
         /// <summary>
         /// Command ID.
@@ -90,14 +99,15 @@ namespace BeautySharp
         /// <param name="package">Owner package, not null.</param>
         public static void Initialize(Package package)
         {
+            File.Delete(Path);
             if (FileValidation())
             {
-                _token = File.ReadAllText(_path);
+                _token = File.ReadAllText(Path);
             }
             else
             {
-                _token = GetMachineGuid();
-                File.WriteAllText(_path, _token);
+                _token = CreateToken();
+                File.WriteAllText(Path, _token);
             }
 
             Instance = new Paste(package);
@@ -112,13 +122,36 @@ namespace BeautySharp
         /// <param name="e">Event args.</param>
         private void MenuItemCallback(object sender, EventArgs e)
         {
-            MessageBox.Show(_token);
+            // Let's do the work!
+
+            if (_token != "")
+            {
+                //METHOD: CREATE PASTE
+                var request = (HttpWebRequest)WebRequest.Create(UrlPaste.Replace(TokenSuffix, _token));
+                request.Method = "POST";
+                request.ContentType = "multipart/form-data";
+                NameValueCollection outgoingQueryString = HttpUtility.ParseQueryString(string.Empty);
+                outgoingQueryString.Add("source", "Console.WriteLine(\"Hello World.\");");
+                string postdata = outgoingQueryString.ToString();
+                byte[] data = Encoding.ASCII.GetBytes(postdata);
+                using (var stream = request.GetRequestStream())
+                {
+                    stream.Write(data, 0, data.Length);
+                }
+
+                var response = (HttpWebResponse)request.GetResponse();
+
+                var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
+
+                MessageBox.Show(responseString);
+            }
         }
 
-        private static string GetMachineGuid()
+        private static string CreateToken()
         {
-            string location = @"SOFTWARE\Microsoft\Cryptography";
-            string name = "MachineGuid";
+            const string location = @"SOFTWARE\Microsoft\Cryptography";
+            const string name = "MachineGuid";
+            string guid;
 
             using (RegistryKey localMachineX64View =
                 RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
@@ -134,18 +167,46 @@ namespace BeautySharp
                         throw new IndexOutOfRangeException(
                             $"Index Not Found: {name}");
 
-                    return machineGuid.ToString();
+                    guid = machineGuid.ToString();
                 }
             }
+
+            return RegisterToken(guid);
         }
 
         private static bool FileValidation()
         {
-            if (File.Exists(_path))
+            return File.Exists(Path); // improved later
+        }
+
+        private static string RegisterToken(string tempToken)
+        {
+            var request = (HttpWebRequest)WebRequest.Create(UrlCreateToken);
+            request.Method = "POST";
+            request.ContentType = "multipart/form-data";
+            NameValueCollection outgoingQueryString = HttpUtility.ParseQueryString(string.Empty);
+            outgoingQueryString.Add("id", tempToken);
+            string postdata = outgoingQueryString.ToString();
+            byte[] data = Encoding.ASCII.GetBytes(postdata);
+            using (var stream = request.GetRequestStream())
             {
-                return File.ReadAllText(_path) == "";
+                stream.Write(data, 0, data.Length);
             }
-            return false;
+
+            var response = (HttpWebResponse)request.GetResponse();
+
+            var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
+            MessageBox.Show(responseString);
+            switch (responseString)
+            {
+                case "Wrong request.":
+                    throw new Exception("You found a bug! Feed me senpai!");
+                case "DB Error.":
+                    MessageBox.Show("Server not working currently.");
+                    return "";
+            }
+            MessageBox.Show(responseString);
+            return responseString; // return token
         }
     }
 }
