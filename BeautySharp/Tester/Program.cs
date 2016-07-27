@@ -4,7 +4,6 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -63,7 +62,7 @@ namespace Tester
                 }
             }
 
-            return RegisterToken(guid).ToString();
+            return RegisterToken(guid);
         }
 
         private static bool FileValidation()
@@ -71,20 +70,25 @@ namespace Tester
             return File.Exists(Path); // improved later
         }
 
-        private static async Task<string> RegisterToken(string tempToken)
+        private static string RegisterToken(string tempToken)
         {
-            HttpClient httpClient = new HttpClient();
-            MultipartFormDataContent form = new MultipartFormDataContent();
+            var request = (HttpWebRequest)WebRequest.Create(UrlCreateToken);
+            request.Method = "POST";
+            request.ContentType = "multipart/form-data";
+            NameValueCollection outgoingQueryString = HttpUtility.ParseQueryString(string.Empty);
+            outgoingQueryString.Add("id", tempToken);
+            string postdata = outgoingQueryString.ToString();
+            byte[] data = Encoding.ASCII.GetBytes(postdata);
+            using (var stream = request.GetRequestStream())
+            {
+                stream.Write(data, 0, data.Length);
+            }
 
-            form.Add(new StringContent(tempToken), "id");
-            HttpResponseMessage response = await httpClient.PostAsync("PostUrl", form);
+            var response = (HttpWebResponse)request.GetResponse();
 
-            response.EnsureSuccessStatusCode();
-            httpClient.Dispose();
-            string sd = response.Content.ReadAsStringAsync().Result;
-
-
-            switch (sd)
+            var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
+            Console.WriteLine(responseString);
+            switch (responseString)
             {
                 case "Wrong request.":
                     throw new Exception("You found a bug! Feed me senpai!");
@@ -92,8 +96,8 @@ namespace Tester
                     Console.WriteLine("Server not working currently.");
                     return "";
             }
-            Console.WriteLine(sd);
-            return sd; // return token
+            Console.WriteLine(responseString);
+            return responseString; // return token
         }
     }
 }
