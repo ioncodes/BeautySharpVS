@@ -27,7 +27,9 @@ namespace BeautySharp
     internal sealed class Paste
     {
         private static string _token = "";
-        private static readonly string Path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/BeautySharp.ini";
+
+        private static readonly string Path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) +
+                                              "/BeautySharp.ini";
 
         private const string TokenSuffix = "{TOKEN}";
 
@@ -64,7 +66,8 @@ namespace BeautySharp
 
             this.package = package;
 
-            OleMenuCommandService commandService = this.ServiceProvider.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+            OleMenuCommandService commandService =
+                this.ServiceProvider.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             if (commandService != null)
             {
                 var menuCommandID = new CommandID(CommandSet, CommandId);
@@ -76,21 +79,14 @@ namespace BeautySharp
         /// <summary>
         /// Gets the instance of the command.
         /// </summary>
-        public static Paste Instance
-        {
-            get;
-            private set;
-        }
+        public static Paste Instance { get; private set; }
 
         /// <summary>
         /// Gets the service provider from the owner package.
         /// </summary>
         private IServiceProvider ServiceProvider
         {
-            get
-            {
-                return this.package;
-            }
+            get { return this.package; }
         }
 
         /// <summary>
@@ -99,7 +95,6 @@ namespace BeautySharp
         /// <param name="package">Owner package, not null.</param>
         public static void Initialize(Package package)
         {
-            File.Delete(Path);
             if (FileValidation())
             {
                 _token = File.ReadAllText(Path);
@@ -127,23 +122,9 @@ namespace BeautySharp
             if (_token != "")
             {
                 //METHOD: CREATE PASTE
-                var request = (HttpWebRequest)WebRequest.Create(UrlPaste.Replace(TokenSuffix, _token));
-                request.Method = "POST";
-                request.ContentType = "multipart/form-data";
-                NameValueCollection outgoingQueryString = HttpUtility.ParseQueryString(string.Empty);
-                outgoingQueryString.Add("source", "Console.WriteLine(\"Hello World.\");");
-                string postdata = outgoingQueryString.ToString();
-                byte[] data = Encoding.ASCII.GetBytes(postdata);
-                using (var stream = request.GetRequestStream())
-                {
-                    stream.Write(data, 0, data.Length);
-                }
-
-                var response = (HttpWebResponse)request.GetResponse();
-
-                var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
-
-                MessageBox.Show(responseString);
+                string source = "Console.WriteLine(\"Hello World.\")";
+                string postData = "source=" + source;
+                Clipboard.SetText(WebPost(UrlPaste.Replace(TokenSuffix, _token), postData));
             }
         }
 
@@ -181,32 +162,35 @@ namespace BeautySharp
 
         private static string RegisterToken(string tempToken)
         {
-            var request = (HttpWebRequest)WebRequest.Create(UrlCreateToken);
+            string data = "id=" + tempToken;
+            return WebPost(UrlCreateToken, data);
+        }
+
+        private static string WebPost(string url, string postData)
+        {
+            HttpWebRequest request = (HttpWebRequest) WebRequest.Create(url);
             request.Method = "POST";
-            request.ContentType = "multipart/form-data";
-            NameValueCollection outgoingQueryString = HttpUtility.ParseQueryString(string.Empty);
-            outgoingQueryString.Add("id", tempToken);
-            string postdata = outgoingQueryString.ToString();
-            byte[] data = Encoding.ASCII.GetBytes(postdata);
+            request.ContentType = "application/x-www-form-urlencoded";
+
+            byte[] data = Encoding.ASCII.GetBytes(postData);
+            request.ContentLength = data.Length;
             using (var stream = request.GetRequestStream())
             {
                 stream.Write(data, 0, data.Length);
             }
-
-            var response = (HttpWebResponse)request.GetResponse();
-
+            var response = (HttpWebResponse) request.GetResponse();
             var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
-            MessageBox.Show(responseString);
+
             switch (responseString)
             {
                 case "Wrong request.":
                     throw new Exception("You found a bug! Feed me senpai!");
                 case "DB Error.":
-                    MessageBox.Show("Server not working currently.");
+                    Console.WriteLine("Server not working currently.");
                     return "";
             }
-            MessageBox.Show(responseString);
-            return responseString; // return token
+
+            return responseString;
         }
     }
 }

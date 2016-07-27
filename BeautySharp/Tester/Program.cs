@@ -72,22 +72,20 @@ namespace Tester
 
         private static string RegisterToken(string tempToken)
         {
-            var request = (HttpWebRequest)WebRequest.Create(UrlCreateToken);
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(UrlCreateToken);
             request.Method = "POST";
-            request.ContentType = "multipart/form-data";
-            NameValueCollection outgoingQueryString = HttpUtility.ParseQueryString(string.Empty);
-            outgoingQueryString.Add("id", tempToken);
-            string postdata = outgoingQueryString.ToString();
-            byte[] data = Encoding.ASCII.GetBytes(postdata);
+            request.ContentType = "application/x-www-form-urlencoded";
+
+            var postData = "id=" + tempToken;
+            var data = Encoding.ASCII.GetBytes(postData);
+            request.ContentLength = data.Length;
             using (var stream = request.GetRequestStream())
             {
                 stream.Write(data, 0, data.Length);
             }
-
             var response = (HttpWebResponse)request.GetResponse();
-
             var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
-            Console.WriteLine(responseString);
+
             switch (responseString)
             {
                 case "Wrong request.":
@@ -96,7 +94,7 @@ namespace Tester
                     Console.WriteLine("Server not working currently.");
                     return "";
             }
-            Console.WriteLine(responseString);
+
             return responseString; // return token
         }
     }
