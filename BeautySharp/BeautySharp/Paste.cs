@@ -5,10 +5,15 @@
 //------------------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Globalization;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using System.Diagnostics;
+using System.Windows.Forms;
+using System.IO;
+using Microsoft.Win32;
 
 namespace BeautySharp
 {
@@ -17,6 +22,10 @@ namespace BeautySharp
     /// </summary>
     internal sealed class Paste
     {
+        private static string _token = "";
+
+        private static readonly string _path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/BeautySharp.ini";
+
         /// <summary>
         /// Command ID.
         /// </summary>
@@ -81,6 +90,16 @@ namespace BeautySharp
         /// <param name="package">Owner package, not null.</param>
         public static void Initialize(Package package)
         {
+            if (FileValidation())
+            {
+                _token = File.ReadAllText(_path);
+            }
+            else
+            {
+                _token = GetMachineGuid();
+                File.WriteAllText(_path, _token);
+            }
+
             Instance = new Paste(package);
         }
 
@@ -93,17 +112,40 @@ namespace BeautySharp
         /// <param name="e">Event args.</param>
         private void MenuItemCallback(object sender, EventArgs e)
         {
-            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", this.GetType().FullName);
-            string title = "Paste";
+            MessageBox.Show(_token);
+        }
 
-            // Show a message box to prove we were here
-            VsShellUtilities.ShowMessageBox(
-                this.ServiceProvider,
-                message,
-                title,
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        private static string GetMachineGuid()
+        {
+            string location = @"SOFTWARE\Microsoft\Cryptography";
+            string name = "MachineGuid";
+
+            using (RegistryKey localMachineX64View =
+                RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            {
+                using (RegistryKey rk = localMachineX64View.OpenSubKey(location))
+                {
+                    if (rk == null)
+                        throw new KeyNotFoundException(
+                            $"Key Not Found: {location}");
+
+                    object machineGuid = rk.GetValue(name);
+                    if (machineGuid == null)
+                        throw new IndexOutOfRangeException(
+                            $"Index Not Found: {name}");
+
+                    return machineGuid.ToString();
+                }
+            }
+        }
+
+        private static bool FileValidation()
+        {
+            if (File.Exists(_path))
+            {
+                return File.ReadAllText(_path) == "";
+            }
+            return false;
         }
     }
 }
