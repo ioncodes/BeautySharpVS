@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel.Composition;
 using System.ComponentModel.Design;
 using System.Globalization;
 using Microsoft.VisualStudio.Shell;
@@ -17,7 +18,9 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Web;
+using EnvDTE;
 using Microsoft.Win32;
+using EnvDTE80;
 
 namespace BeautySharp
 {
@@ -36,6 +39,8 @@ namespace BeautySharp
         /* URL BASES */
         private const string UrlPaste = "http://www.ioncodes.com/BeautySharp/create.php?token={TOKEN}";
         private const string UrlCreateToken = "http://www.ioncodes.com/BeautySharp/createtoken.php";
+
+        private DTE _dte;
 
         /// <summary>
         /// Command ID.
@@ -68,6 +73,9 @@ namespace BeautySharp
 
             OleMenuCommandService commandService =
                 this.ServiceProvider.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+
+            _dte = (DTE)ServiceProvider.GetService(typeof(DTE));
+
             if (commandService != null)
             {
                 var menuCommandID = new CommandID(CommandSet, CommandId);
@@ -119,13 +127,33 @@ namespace BeautySharp
         {
             // Let's do the work!
 
-            if (_token != "")
+            if (_token == "") return;
+            //METHOD: CREATE PASTE
+            if (_dte.ActiveDocument != null)
             {
-                //METHOD: CREATE PASTE
-                string source = "Console.WriteLine(\"Hello World.\")";
-                string postData = "source=" + source;
-                Clipboard.SetText(WebPost(UrlPaste.Replace(TokenSuffix, _token), postData));
+                string source = GetDocumentText(_dte.ActiveDocument);
+                if (source != "")
+                {
+                    string postData = "source=" + source;
+                    Clipboard.SetText(WebPost(UrlPaste.Replace(TokenSuffix, _token), postData));
+                }
+                else
+                {
+                    MessageBox.Show("Source cannot be empty!");
+                }
             }
+            else
+            {
+                MessageBox.Show("No valid file opened!");
+            }
+        }
+
+        private static string GetDocumentText(Document document)
+        {
+            var textDocument = (TextDocument)document.Object("TextDocument");
+            EditPoint editPoint = textDocument.StartPoint.CreateEditPoint();
+            var content = editPoint.GetText(textDocument.EndPoint);
+            return content;
         }
 
         private static string CreateToken()
@@ -186,7 +214,10 @@ namespace BeautySharp
                 case "Wrong request.":
                     throw new Exception("You found a bug! Feed me senpai!");
                 case "DB Error.":
-                    Console.WriteLine("Server not working currently.");
+                    MessageBox.Show("Server not working currently.");
+                    return "";
+                case "Error creating file.":
+                    MessageBox.Show("Could not paste. Make sure a valid file is open.");
                     return "";
             }
 
