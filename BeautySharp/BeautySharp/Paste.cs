@@ -206,7 +206,8 @@ namespace BeautySharp
             switch (responseString)
             {
                 case "Wrong request.":
-                    throw new Exception("You found a bug! Feed me senpai!");
+                    MessageBox.Show("Internal error. Please report this to the developer.");
+                    return "";
                 case "DB Error.":
                     MessageBox.Show("Server not working currently.");
                     return "";
