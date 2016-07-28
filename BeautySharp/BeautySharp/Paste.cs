@@ -6,21 +6,14 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.ComponentModel.Composition;
 using System.ComponentModel.Design;
-using System.Globalization;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using System.Diagnostics;
 using System.Windows.Forms;
 using System.IO;
 using System.Net;
 using System.Text;
-using System.Web;
 using EnvDTE;
 using Microsoft.Win32;
-using EnvDTE80;
 
 namespace BeautySharp
 {

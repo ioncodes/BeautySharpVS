@@ -56,7 +56,7 @@
         <Parent guid="guidPastePackageCmdSet" id="MyMenuGroup" />
         <Icon guid="guidImages" id="bmpPic1" />
         <Strings>
-          <ButtonText>Invoke Paste</ButtonText>
+          <ButtonText>Paste to B#</ButtonText>
         </Strings>
       </Button>
     </Buttons>
