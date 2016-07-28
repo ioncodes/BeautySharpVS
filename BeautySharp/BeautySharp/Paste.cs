@@ -122,7 +122,7 @@ namespace BeautySharp
             // Let's do the work!
 
             if (_token == "") return;
-            //METHOD: CREATE PASTE
+            // METHOD: CREATE PASTE
             if (_dte.ActiveDocument != null)
             {
                 string source = GetDocumentText(_dte.ActiveDocument);
