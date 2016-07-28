@@ -12,6 +12,7 @@ using System.Windows.Forms;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Web;
 using EnvDTE;
 using Microsoft.Win32;
 
@@ -127,7 +128,7 @@ namespace BeautySharp
                 string source = GetDocumentText(_dte.ActiveDocument);
                 if (source != "")
                 {
-                    string postData = "source=" + source;
+                    string postData = "source=" + HttpUtility.UrlEncode(source);
                     Clipboard.SetText(WebPost(UrlPaste.Replace(TokenSuffix, _token), postData));
                 }
                 else
