@@ -13,6 +13,8 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Web;
+using Windows.Data.Xml.Dom;
+using Windows.UI.Notifications;
 using EnvDTE;
 using Microsoft.Win32;
 
@@ -26,8 +28,8 @@ namespace BeautySharp
         public DTE _dte;
         
         /// <summary>
-                                /// Command ID.
-                                /// </summary>
+        /// Command ID.
+        /// </summary>
         public const int CommandId = 0x0100;
 
         /// <summary>
@@ -109,6 +111,8 @@ namespace BeautySharp
                 {
                     string postData = "source=" + HttpUtility.UrlEncode(source);
                     Clipboard.SetText(Functions.WebPost(Variables.UrlPaste.Replace(Variables.TokenSuffix, Variables._token), postData));
+
+                    Notify("Your paste has been published!");
                 }
                 else
                 {
@@ -121,5 +125,28 @@ namespace BeautySharp
             }
         }
 
+        // HELPER METHOD! Refactor into separate helper class!
+        public static void Notify(string message)
+        {
+            // Get a toast XML template
+            XmlDocument toastXml = ToastNotificationManager.GetTemplateContent(ToastTemplateType.ToastText02);
+
+            // Fill in the text elements
+            XmlNodeList stringElements = toastXml.GetElementsByTagName("text");
+            stringElements[0].AppendChild(toastXml.CreateTextNode("BeautySharp Notification"));
+            stringElements[1].AppendChild(toastXml.CreateTextNode(message));
+            //stringElements[2].AppendChild(toastXml.CreateTextNode("Any text")); // Possible third line
+
+            ToastNotification toast = new ToastNotification(toastXml);
+            toast.Activated += ToastActivated;
+
+            ToastNotificationManager.CreateToastNotifier(CommandSet.ToString()).Show(toast);
+            // CommandSet could practically be any kind of hardcoded ID
+        }
+
+        private static void ToastActivated(ToastNotification sender, object args)
+        {
+            // Do we want to do anything here?
+        }
     }
 }
