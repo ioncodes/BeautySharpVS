@@ -56,21 +56,21 @@
         <Parent guid="guidPastePackageCmdSet" id="MyMenuGroup" />
         <Icon guid="guidImages" id="bmpPic1" />
         <Strings>
-          <ButtonText>Paste and copy link</ButtonText>
+          <ButtonText>Paste to B# and copy link</ButtonText>
         </Strings>
       </Button>
       <Button guid="guidPastePackageCmdSet" id="cmdidBrowser" priority="0x0100" type="Button">
         <Parent guid="guidPastePackageCmdSet" id="MyMenuGroup" />
         <Icon guid="guidImages1" id="bmpPic1" />
         <Strings>
-          <ButtonText>Paste and open browser</ButtonText>
+          <ButtonText>Paste to B# and open browser</ButtonText>
         </Strings>
       </Button>
       <Button guid="guidPastePackageCmdSet" id="cmdidPasteAndBrowser" priority="0x0100" type="Button">
         <Parent guid="guidPastePackageCmdSet" id="MyMenuGroup" />
         <Icon guid="guidImages2" id="bmpPic1" />
         <Strings>
-          <ButtonText>Paste, open browser and copy link</ButtonText>
+          <ButtonText>Paste to B#, open browser and copy link</ButtonText>
         </Strings>
       </Button>
     </Buttons>
