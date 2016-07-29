@@ -1,34 +1,31 @@
 ﻿//------------------------------------------------------------------------------
-// <copyright file="Paste.cs" company="ionix">
-//     Copyright (c) ionix.  All rights reserved.
+// <copyright file="PasteAndBrowser.cs" company="Company">
+//     Copyright (c) Company.  All rights reserved.
 // </copyright>
 //------------------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.Design;
-using Microsoft.VisualStudio.Shell;
-using System.Windows.Forms;
-using System.IO;
-using System.Net;
-using System.Text;
+using System.Globalization;
 using System.Web;
+using System.Windows.Forms;
 using EnvDTE;
-using Microsoft.Win32;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace BeautySharp
 {
     /// <summary>
     /// Command handler
     /// </summary>
-    internal sealed class Paste
+    internal sealed class PasteAndBrowser
     {
-        public DTE _dte;
-        
+        private DTE _dte;
+
         /// <summary>
-                                /// Command ID.
-                                /// </summary>
-        public const int CommandId = 0x0100;
+        /// Command ID.
+        /// </summary>
+        public const int CommandId = 4130;
 
         /// <summary>
         /// Command menu group (command set GUID).
@@ -41,11 +38,11 @@ namespace BeautySharp
         private readonly Package package;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Paste"/> class.
+        /// Initializes a new instance of the <see cref="PasteAndBrowser"/> class.
         /// Adds our command handlers for menu (commands must exist in the command table file)
         /// </summary>
         /// <param name="package">Owner package, not null.</param>
-        private Paste(Package package)
+        private PasteAndBrowser(Package package)
         {
             if (package == null)
             {
@@ -54,11 +51,9 @@ namespace BeautySharp
 
             this.package = package;
 
-            OleMenuCommandService commandService =
-                this.ServiceProvider.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
-
             _dte = (DTE)ServiceProvider.GetService(typeof(DTE));
 
+            OleMenuCommandService commandService = this.ServiceProvider.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             if (commandService != null)
             {
                 var menuCommandID = new CommandID(CommandSet, CommandId);
@@ -70,14 +65,21 @@ namespace BeautySharp
         /// <summary>
         /// Gets the instance of the command.
         /// </summary>
-        public static Paste Instance { get; private set; }
+        public static PasteAndBrowser Instance
+        {
+            get;
+            private set;
+        }
 
         /// <summary>
         /// Gets the service provider from the owner package.
         /// </summary>
         private IServiceProvider ServiceProvider
         {
-            get { return this.package; }
+            get
+            {
+                return this.package;
+            }
         }
 
         /// <summary>
@@ -86,7 +88,7 @@ namespace BeautySharp
         /// <param name="package">Owner package, not null.</param>
         public static void Initialize(Package package)
         {
-            Instance = new Paste(package);
+            Instance = new PasteAndBrowser(package);
         }
 
         /// <summary>
@@ -98,8 +100,6 @@ namespace BeautySharp
         /// <param name="e">Event args.</param>
         private void MenuItemCallback(object sender, EventArgs e)
         {
-            // Let's do the work!
-
             if (Variables._token == "") return;
             // METHOD: CREATE PASTE
             if (_dte.ActiveDocument != null)
@@ -108,7 +108,10 @@ namespace BeautySharp
                 if (source != "")
                 {
                     string postData = "source=" + HttpUtility.UrlEncode(source);
-                    Clipboard.SetText(Functions.WebPost(Variables.UrlPaste.Replace(Variables.TokenSuffix, Variables._token), postData));
+                    string url = Functions.WebPost(Variables.UrlPaste.Replace(Variables.TokenSuffix, Variables._token),
+                        postData);
+                    Clipboard.SetText(url);
+                    System.Diagnostics.Process.Start(url);
                 }
                 else
                 {
@@ -120,6 +123,5 @@ namespace BeautySharp
                 MessageBox.Show("No valid file opened!");
             }
         }
-
     }
 }

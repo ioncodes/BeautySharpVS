@@ -4,9 +4,13 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.Win32;
 
 namespace BeautySharp
 {
@@ -38,6 +42,7 @@ namespace BeautySharp
         /// PastePackage GUID string.
         /// </summary>
         public const string PackageGuidString = "b8b58ff6-40c9-4b01-9c9a-56f036e0efc2";
+        
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Paste"/> class.
@@ -48,8 +53,54 @@ namespace BeautySharp
             // any Visual Studio service because at this point the package object is created but
             // not sited yet inside Visual Studio environment. The place to do all the other
             // initialization is the Initialize method.
+
+            if (FileValidation())
+            {
+                Variables._token = File.ReadAllText(Variables.Path);
+            }
+            else
+            {
+                Variables._token = CreateToken();
+                File.WriteAllText(Variables.Path, Variables._token);
+            }
         }
 
+        private static string RegisterToken(string tempToken)
+        {
+            string data = "id=" + tempToken;
+            return Functions.WebPost(Variables.UrlCreateToken, data);
+        }
+        private static string CreateToken()
+        {
+            const string location = @"SOFTWARE\Microsoft\Cryptography";
+            const string name = "MachineGuid";
+            string guid;
+
+            using (RegistryKey localMachineX64View =
+                RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            {
+                using (RegistryKey rk = localMachineX64View.OpenSubKey(location))
+                {
+                    if (rk == null)
+                        throw new KeyNotFoundException(
+                            $"Key Not Found: {location}");
+
+                    object machineGuid = rk.GetValue(name);
+                    if (machineGuid == null)
+                        throw new IndexOutOfRangeException(
+                            $"Index Not Found: {name}");
+
+                    guid = machineGuid.ToString();
+                }
+            }
+
+            return RegisterToken(guid);
+        }
+
+        private static bool FileValidation()
+        {
+            return File.Exists(Variables.Path); // improved later
+        }
         #region Package Members
 
         /// <summary>
@@ -60,6 +111,8 @@ namespace BeautySharp
         {
             Paste.Initialize(this);
             base.Initialize();
+            Browser.Initialize(this);
+            PasteAndBrowser.Initialize(this);
         }
 
         #endregion
