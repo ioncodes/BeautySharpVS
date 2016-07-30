@@ -112,7 +112,7 @@ namespace BeautySharp
                         postData);
                     Clipboard.SetText(url);
                     System.Diagnostics.Process.Start(url);
-                    Paste.Notify("Your paste url was also copied to your clipboard!");
+                    Functions.Notify("Your paste has been published! Copied link and opening browser!", CommandSet); // Toast
                 }
                 else
                 {

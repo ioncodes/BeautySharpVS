@@ -112,7 +112,7 @@ namespace BeautySharp
                     string postData = "source=" + HttpUtility.UrlEncode(source);
                     Clipboard.SetText(Functions.WebPost(Variables.UrlPaste.Replace(Variables.TokenSuffix, Variables._token), postData));
 
-                    Notify("Your paste has been published!");
+                    Functions.Notify("Your paste has been published! Link is now in your clipboard!", CommandSet); // Toast
                 }
                 else
                 {
@@ -123,30 +123,6 @@ namespace BeautySharp
             {
                 MessageBox.Show("No valid file opened!");
             }
-        }
-
-        // HELPER METHOD! Refactor into separate helper class!
-        public static void Notify(string message)
-        {
-            // Get a toast XML template
-            XmlDocument toastXml = ToastNotificationManager.GetTemplateContent(ToastTemplateType.ToastText02);
-
-            // Fill in the text elements
-            XmlNodeList stringElements = toastXml.GetElementsByTagName("text");
-            stringElements[0].AppendChild(toastXml.CreateTextNode("BeautySharp Notification"));
-            stringElements[1].AppendChild(toastXml.CreateTextNode(message));
-            //stringElements[2].AppendChild(toastXml.CreateTextNode("Any text")); // Possible third line
-
-            ToastNotification toast = new ToastNotification(toastXml);
-            toast.Activated += ToastActivated;
-
-            ToastNotificationManager.CreateToastNotifier(CommandSet.ToString()).Show(toast);
-            // CommandSet could practically be any kind of hardcoded ID
-        }
-
-        private static void ToastActivated(ToastNotification sender, object args)
-        {
-            // Do we want to do anything here?
         }
     }
 }

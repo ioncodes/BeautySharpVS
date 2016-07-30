@@ -6,6 +6,10 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Windows.Data.Xml.Dom;
+using Windows.UI.Notifications;
+using System.ComponentModel.Design;
+using Microsoft.VisualStudio.Shell;
 using EnvDTE;
 
 namespace BeautySharp
@@ -50,6 +54,30 @@ namespace BeautySharp
             }
 
             return responseString;
+        }
+
+        // HELPER METHOD! Refactor into separate helper class!
+        public static void Notify(string message, Guid cmdSet)
+        {
+            // Get a toast XML template
+            XmlDocument toastXml = ToastNotificationManager.GetTemplateContent(ToastTemplateType.ToastText02);
+
+            // Fill in the text elements
+            XmlNodeList stringElements = toastXml.GetElementsByTagName("text");
+            stringElements[0].AppendChild(toastXml.CreateTextNode("BeautySharp Notification"));
+            stringElements[1].AppendChild(toastXml.CreateTextNode(message));
+            //stringElements[2].AppendChild(toastXml.CreateTextNode("Any text")); // Possible third line
+
+            ToastNotification toast = new ToastNotification(toastXml);
+            toast.Activated += ToastActivated;
+
+            ToastNotificationManager.CreateToastNotifier(cmdSet.ToString()).Show(toast);
+            // CommandSet could practically be any kind of hardcoded ID
+        }
+
+        private static void ToastActivated(ToastNotification sender, object args)
+        {
+            // Do we want to do anything here?
         }
     }
 }

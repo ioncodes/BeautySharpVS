@@ -108,6 +108,8 @@ namespace BeautySharp
                 {
                     string postData = "source=" + HttpUtility.UrlEncode(source);
                     System.Diagnostics.Process.Start(Functions.WebPost(Variables.UrlPaste.Replace(Variables.TokenSuffix, Variables._token), postData));
+
+                    Functions.Notify("Your paste has been published! Browser will now open!", CommandSet); // Toast
                 }
                 else
                 {
