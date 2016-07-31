@@ -107,7 +107,7 @@ namespace BeautySharp
                 string source = Functions.GetDocumentText(_dte.ActiveDocument);
                 if (source != "")
                 {
-                    string postData = "source=" + HttpUtility.UrlEncode(source);
+                    string postData = "source=" + Uri.EscapeDataString(source);
                     string url = Functions.WebPost(Variables.UrlPaste.Replace(Variables.TokenSuffix, Variables._token),
                         postData);
                     Clipboard.SetText(url);
