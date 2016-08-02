@@ -9,3 +9,6 @@ Now, in your clipboard you will find the direct link to the paste.
 Buildstatus: [![Build status](https://ci.appveyor.com/api/projects/status/x4bac9m47j59cjk4/branch/master?svg=true)](https://ci.appveyor.com/project/ioncodes/beautysharpvs/branch/master)
 
 Visual Studio Gallery: https://visualstudiogallery.msdn.microsoft.com/f5020c7f-509a-4bc6-96e7-dd9ba7d33b80
+
+# BeautySharpPHP
+The php sourcecode can be found here: https://github.com/ioncodes/BeautySharpPHP
